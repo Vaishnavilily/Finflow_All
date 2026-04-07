@@ -2,6 +2,7 @@
 import { useSettings } from "@/context/SettingsContext";
 import { useState, useEffect } from "react";
 import { Check, Search, AlertCircle, RefreshCw } from "lucide-react";
+import { authFetch } from "@/lib/auth-fetch";
 import "./page.css";
 
 export default function Reconciliation() {
@@ -12,7 +13,7 @@ export default function Reconciliation() {
   const fetchReconciliationData = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/reconciliation");
+      const res = await authFetch("/api/reconciliation");
       const json = await res.json();
       if (json.success && json.data) {
         setBankFeed(json.data.bankFeed);
@@ -33,7 +34,7 @@ export default function Reconciliation() {
     
     setProcessingId(bankItem.id);
     try {
-      const res = await fetch(`/api/transactions/${bankItem.suggestedMatch._id}`, {
+      const res = await authFetch(`/api/transactions/${bankItem.suggestedMatch._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isReconciled: true })

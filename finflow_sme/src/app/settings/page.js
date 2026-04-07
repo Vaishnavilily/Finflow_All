@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import "./page.css";
 import "@/components/forms/forms.css";
+import { authFetch } from "@/lib/auth-fetch";
 
 export default function Settings() {
   const [loading, setLoading] = useState(true);
@@ -19,7 +20,7 @@ export default function Settings() {
   useEffect(() => {
     async function fetchSettings() {
       try {
-        const res = await fetch("/api/settings");
+        const res = await authFetch("/api/settings");
         const json = await res.json();
         if (json.success && json.data) {
           setFormData(json.data);
@@ -44,7 +45,7 @@ export default function Settings() {
     setError("");
 
     try {
-      const res = await fetch("/api/settings", {
+      const res = await authFetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)

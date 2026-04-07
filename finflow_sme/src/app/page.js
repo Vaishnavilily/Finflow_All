@@ -3,6 +3,7 @@ import { useSettings } from "@/context/SettingsContext";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Receipt, PiggyBank, Briefcase, TrendingUp, TrendingDown, Users } from "lucide-react";
+import { authFetch } from "@/lib/auth-fetch";
 import "./page.css";
 
 export default function Dashboard() {
@@ -20,10 +21,10 @@ export default function Dashboard() {
     async function fetchStats() {
       try {
         const [invRes, billsRes, custRes, transRes] = await Promise.all([
-          fetch("/api/invoices"),
-          fetch("/api/bills"),
-          fetch("/api/customers"),
-          fetch("/api/transactions")
+          authFetch("/api/invoices"),
+          authFetch("/api/bills"),
+          authFetch("/api/customers"),
+          authFetch("/api/transactions")
         ]);
         
         const invoices = await invRes.json();

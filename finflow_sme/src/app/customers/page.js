@@ -4,6 +4,7 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import DataTable from "@/components/ui/DataTable";
 import CustomerForm from "@/components/forms/CustomerForm";
+import { authFetch } from "@/lib/auth-fetch";
 import "./page.css";
 
 export default function Customers() {
@@ -15,7 +16,7 @@ export default function Customers() {
   useEffect(() => {
     async function fetchCustomers() {
       try {
-        const res = await fetch("/api/customers");
+        const res = await authFetch("/api/customers");
         const json = await res.json();
         if (json.success) {
           setCustomers(json.data);
@@ -47,7 +48,7 @@ export default function Customers() {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this customer?")) {
       try {
-        const res = await fetch(`/api/customers/${id}`, { method: "DELETE" });
+        const res = await authFetch(`/api/customers/${id}`, { method: "DELETE" });
         if (res.ok) {
           setCustomers(customers.filter((c) => c._id !== id));
         }

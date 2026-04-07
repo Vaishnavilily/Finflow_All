@@ -5,6 +5,7 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import DataTable from "@/components/ui/DataTable";
 import BillForm from "@/components/forms/BillForm";
+import { authFetch } from "@/lib/auth-fetch";
 import "./page.css";
 
 export default function Bills() {
@@ -16,7 +17,7 @@ export default function Bills() {
   useEffect(() => {
     async function fetchBills() {
       try {
-        const res = await fetch("/api/bills");
+        const res = await authFetch("/api/bills");
         const json = await res.json();
         if (json.success) {
           setBills(json.data);
@@ -48,7 +49,7 @@ export default function Bills() {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this bill?")) {
       try {
-        const res = await fetch(`/api/bills/${id}`, { method: "DELETE" });
+        const res = await authFetch(`/api/bills/${id}`, { method: "DELETE" });
         if (res.ok) {
           setBills(bills.filter((b) => b._id !== id));
         }

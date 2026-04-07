@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Building2, Plus, RefreshCw, Landmark } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import BankConnectForm from "@/components/forms/BankConnectForm";
+import { authFetch } from "@/lib/auth-fetch";
 import "./page.css";
 
 export default function ConnectAccounts() {
@@ -14,7 +15,7 @@ export default function ConnectAccounts() {
   const fetchConnections = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/bank-connections");
+      const res = await authFetch("/api/bank-connections");
       const json = await res.json();
       if (json.success) setConnections(json.data);
     } catch (error) {
@@ -38,7 +39,7 @@ export default function ConnectAccounts() {
     
     setIsDeleting(id);
     try {
-      const res = await fetch(`/api/bank-connections/${id}`, { method: "DELETE" });
+      const res = await authFetch(`/api/bank-connections/${id}`, { method: "DELETE" });
       const json = await res.json();
       if (json.success) {
         setConnections(connections.filter(c => c._id !== id));

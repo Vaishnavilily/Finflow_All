@@ -4,6 +4,7 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import DataTable from "@/components/ui/DataTable";
 import VendorForm from "@/components/forms/VendorForm";
+import { authFetch } from "@/lib/auth-fetch";
 import "./page.css";
 
 export default function Vendors() {
@@ -15,7 +16,7 @@ export default function Vendors() {
   useEffect(() => {
     async function fetchVendors() {
       try {
-        const res = await fetch("/api/vendors");
+        const res = await authFetch("/api/vendors");
         const json = await res.json();
         if (json.success) {
           setVendors(json.data);
@@ -47,7 +48,7 @@ export default function Vendors() {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this vendor?")) {
       try {
-        const res = await fetch(`/api/vendors/${id}`, { method: "DELETE" });
+        const res = await authFetch(`/api/vendors/${id}`, { method: "DELETE" });
         if (res.ok) {
           setVendors(vendors.filter((v) => v._id !== id));
         }

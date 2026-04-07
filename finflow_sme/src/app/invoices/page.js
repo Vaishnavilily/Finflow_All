@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, Search, FileText, Pencil, Trash2 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import InvoiceForm from "@/components/forms/InvoiceForm";
+import { authFetch } from "@/lib/auth-fetch";
 import "./invoices.css";
 
 export default function Invoices() {
@@ -35,7 +36,7 @@ export default function Invoices() {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this invoice?")) {
       try {
-        const res = await fetch(`/api/invoices/${id}`, { method: "DELETE" });
+        const res = await authFetch(`/api/invoices/${id}`, { method: "DELETE" });
         if (res.ok) {
           setInvoices(invoices.filter((inv) => inv._id !== id));
         }
@@ -48,7 +49,7 @@ export default function Invoices() {
   useEffect(() => {
     async function fetchInvoices() {
       try {
-        const res = await fetch("/api/invoices");
+        const res = await authFetch("/api/invoices");
         const json = await res.json();
         if (json.success) {
           setInvoices(json.data);

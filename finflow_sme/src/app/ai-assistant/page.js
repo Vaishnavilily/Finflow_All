@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Bot, Sparkles } from "lucide-react";
+import { authFetch } from "@/lib/auth-fetch";
 import "./page.css";
 
 const SUGGESTIONS = [
@@ -62,7 +63,7 @@ export default function AIAssistantPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/chat", {
+      const res = await authFetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: nextMessages }),

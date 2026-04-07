@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Send, Clock } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import PayoutForm from "@/components/forms/PayoutForm";
+import { authFetch } from "@/lib/auth-fetch";
 import "./page.css";
 
 export default function Payouts() {
@@ -17,8 +18,8 @@ export default function Payouts() {
     setLoading(true);
     try {
       const [balRes, payoutsRes] = await Promise.all([
-        fetch("/api/payouts/balance"),
-        fetch("/api/payouts")
+        authFetch("/api/payouts/balance"),
+        authFetch("/api/payouts")
       ]);
       const balJson = await balRes.json();
       const payoutsJson = await payoutsRes.json();

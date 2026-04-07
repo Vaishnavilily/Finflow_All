@@ -5,6 +5,7 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import DataTable from "@/components/ui/DataTable";
 import TransactionForm from "@/components/forms/TransactionForm";
+import { authFetch } from "@/lib/auth-fetch";
 import "./page.css";
 
 export default function Transactions() {
@@ -16,7 +17,7 @@ export default function Transactions() {
   useEffect(() => {
     async function fetchTransactions() {
       try {
-        const res = await fetch("/api/transactions");
+        const res = await authFetch("/api/transactions");
         const json = await res.json();
         if (json.success) {
           setTransactions(json.data);
@@ -48,7 +49,7 @@ export default function Transactions() {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this transaction?")) {
       try {
-        const res = await fetch(`/api/transactions/${id}`, { method: "DELETE" });
+        const res = await authFetch(`/api/transactions/${id}`, { method: "DELETE" });
         if (res.ok) {
           setTransactions(transactions.filter((t) => t._id !== id));
         }

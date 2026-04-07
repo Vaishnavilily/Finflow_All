@@ -5,6 +5,7 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import DataTable from "@/components/ui/DataTable";
 import EstimateForm from "@/components/forms/EstimateForm";
+import { authFetch } from "@/lib/auth-fetch";
 import "./page.css";
 
 export default function Estimates() {
@@ -16,7 +17,7 @@ export default function Estimates() {
   useEffect(() => {
     async function fetchEstimates() {
       try {
-        const res = await fetch("/api/estimates");
+        const res = await authFetch("/api/estimates");
         const json = await res.json();
         if (json.success) {
           setEstimates(json.data);
@@ -48,7 +49,7 @@ export default function Estimates() {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this estimate?")) {
       try {
-        const res = await fetch(`/api/estimates/${id}`, { method: "DELETE" });
+        const res = await authFetch(`/api/estimates/${id}`, { method: "DELETE" });
         if (res.ok) {
           setEstimates(estimates.filter((e) => e._id !== id));
         }

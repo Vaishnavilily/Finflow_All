@@ -4,6 +4,7 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import DataTable from "@/components/ui/DataTable";
 import AccountForm from "@/components/forms/AccountForm";
+import { authFetch } from "@/lib/auth-fetch";
 import "./page.css";
 
 export default function ChartOfAccounts() {
@@ -15,7 +16,7 @@ export default function ChartOfAccounts() {
   useEffect(() => {
     async function fetchAccounts() {
       try {
-        const res = await fetch("/api/accounts");
+        const res = await authFetch("/api/accounts");
         const json = await res.json();
         if (json.success) {
           setAccounts(json.data);
@@ -49,7 +50,7 @@ export default function ChartOfAccounts() {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this account?")) {
       try {
-        const res = await fetch(`/api/accounts/${id}`, { method: "DELETE" });
+        const res = await authFetch(`/api/accounts/${id}`, { method: "DELETE" });
         if (res.ok) {
           setAccounts(accounts.filter((a) => a._id !== id));
         }
