@@ -1,3 +1,39 @@
 {
-    "version": 2
+  "version": 2,
+  "builds": [
+    {
+      "src": "index.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "finflow_sme/package.json",
+      "use": "@vercel/next"
+    },
+    {
+      "src": "personal/package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/sme/(.*)",
+      "dest": "/finflow_sme/$1"
+    },
+    {
+      "src": "/personal/(.*)",
+      "dest": "/personal/$1"
+    },
+    {
+      "src": "/",
+      "dest": "/index.html"
+    }
+  ]
 }
