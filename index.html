@@ -357,11 +357,6 @@
             background: var(--green-600);
         }
 
-        .pw-strength-text {
-            font-size: 11.5px;
-            color: var(--gray-400);
-        }
-
         .pw-rules {
             margin-top: 8px;
             display: grid;
@@ -789,9 +784,13 @@
         /* ---- State ---- */
         let currentType = null; // 'individual' | 'sme'
 
+        // ✅ FIX 1: Updated to point to the correct combined-app paths
+        // Since gateway, personal, and SME are all in the same Vercel deployment (finflow-all.vercel.app),
+        // the personal dashboard is at /personal/dashboard and SME is at /sme (adjust if your
+        // vercel.json routes them differently — check your vercel.json rewrites).
         const APPS = {
-            individual: 'https://finflow-individual.vercel.app/dashboard',
-            sme: 'https://finflowsme.vercel.app/'
+            individual: '/personal/dashboard',
+            sme: '/sme'
         };
 
         const TYPE_LABELS = {
@@ -835,9 +834,7 @@
             show('view-register');
         }
 
-        function showCreate() {
-            show('view-create-type');
-        }
+        function showCreate() { show('view-create-type'); }
 
         function showLoginFromReg() {
             selectType(currentType || 'individual');
@@ -904,10 +901,9 @@
                     showAlert('login-alert', 'error', data.message || 'Invalid email or password. Please try again.');
                 }
             } catch (err) {
-                /* ---- Dev/demo fallback when API not reachable ---- */
-                console.warn('API not reachable, using demo mode:', err.message);
+                console.warn('API error:', err.message);
                 showAlert('login-alert', 'error',
-                    'Could not connect to the authentication server. Ensure the /api/auth/login endpoint is deployed on your Vercel backend.');
+                    'Could not connect to the authentication server. Please try again.');
             }
 
             setLoading('login-btn', 'login-btn-text', false, 'Sign in');
@@ -948,33 +944,47 @@
                     showAlert('reg-alert', 'error', data.message || 'Registration failed. Please try again.');
                 }
             } catch (err) {
-                console.warn('API not reachable, using demo mode:', err.message);
+                console.warn('API error:', err.message);
                 showAlert('reg-alert', 'error',
-                    'Could not connect to the authentication server. Ensure the /api/auth/register endpoint is deployed on your Vercel backend.');
+                    'Could not connect to the authentication server. Please try again.');
             }
 
             setLoading('reg-btn', 'reg-btn-text', false, 'Create account');
         }
 
         /* ---- Redirect ---- */
+        // ✅ FIX 2: Proper session handoff
+        // Since all apps now share the same domain (finflow-all.vercel.app),
+        // we store the auth in localStorage (same domain = accessible everywhere)
+        // AND pass authId as a URL param as a fallback.
         function redirectSuccess(type, isNew, user) {
             document.getElementById('success-title').textContent = isNew ? 'Account created!' : 'Login successful!';
             document.getElementById('success-msg').textContent =
                 'Redirecting you to ' + (type === 'sme' ? 'FinFlow SME' : 'FinFlow Individual') + '…';
             show('view-success');
+
+            // Build the auth object using the user data returned by the API
+            // The API returns user.id (the MongoDB _id as a string) which is the authId
             const authUser = {
-                authId: user?.id ? String(user.id) : '',
+                authId: user?.id ? String(user.id) : (user?._id ? String(user._id) : ''),
                 email: user?.email ? String(user.email).toLowerCase() : '',
                 name: [user?.firstName, user?.lastName].filter(Boolean).join(' ').trim(),
                 userType: type
             };
-            if (authUser.authId) {
-                localStorage.setItem('finflow.auth', JSON.stringify(authUser));
-                localStorage.setItem('gatewayUser', JSON.stringify(authUser));
+
+            if (!authUser.authId) {
+                console.error('No authId returned from login API! Check that /api/auth/login returns { user: { id, email, firstName, lastName } }');
             }
-            const targetUrl = new URL(APPS[type]);
+
+            // ✅ Store in localStorage — works because all apps are now on the same domain
+            localStorage.setItem('finflow.auth', JSON.stringify(authUser));
+
+            // ✅ Also pass as URL param — belt-and-suspenders for the Next.js app to read on first load
+            const targetPath = APPS[type];
+            const targetUrl = new URL(targetPath, window.location.origin);
             if (authUser.authId) targetUrl.searchParams.set('authId', authUser.authId);
-            if (authUser.email) targetUrl.searchParams.set('email', authUser.email);
+            if (authUser.email) targetUrl.searchParams.set('email', encodeURIComponent(authUser.email));
+
             setTimeout(() => { window.location.href = targetUrl.toString(); }, 2200);
         }
 
