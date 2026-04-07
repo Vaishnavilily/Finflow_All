@@ -2,11 +2,17 @@ import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb";
 import Invoice from "@/models/Invoice";
 import { buildDocumentTotals, normalizeString } from "@/lib/db-normalizers";
+import { requireAuth } from "@/lib/jwt";
 
-export async function GET() {
+export async function GET(request) {
   try {
+    const auth = await requireAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
+
     await connectToDatabase();
-    const invoices = await Invoice.find({}).sort({ createdAt: -1 });
+    const invoices = await Invoice.find({ ownerAuthId: auth.authId }).sort({ createdAt: -1 });
     return NextResponse.json({ success: true, data: invoices });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 400 });
@@ -15,12 +21,18 @@ export async function GET() {
 
 export async function POST(request) {
   try {
+    const auth = await requireAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
+
     await connectToDatabase();
     const body = await request.json();
     const totals = buildDocumentTotals(body.items, body.taxRate);
     const payload = {
       ...body,
       ...totals,
+      ownerAuthId: auth.authId,
       invoiceNumber: normalizeString(body.invoiceNumber),
       customerName: normalizeString(body.customerName),
       customerEmail: normalizeString(body.customerEmail),

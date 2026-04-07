@@ -11,4 +11,4 @@ const GoalSchema = new mongoose.Schema({
 
 GoalSchema.index({ ownerAuthId: 1, createdAt: -1 });
 
-export default mongoose.models.Goal || mongoose.model('Goal', GoalSchema);
+export default mongoose.models.Goal || mongoose.model('Goal', GoalSchema, 'personal_goals');

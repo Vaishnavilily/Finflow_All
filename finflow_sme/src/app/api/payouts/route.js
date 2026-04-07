@@ -2,11 +2,17 @@ import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb";
 import Payout from "@/models/Payout";
 import { normalizeMoney, normalizeString } from "@/lib/db-normalizers";
+import { requireAuth } from "@/lib/jwt";
 
-export async function GET() {
+export async function GET(request) {
   try {
+    const auth = await requireAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
+
     await connectToDatabase();
-    const payouts = await Payout.find({}).sort({ createdAt: -1 });
+    const payouts = await Payout.find({ ownerAuthId: auth.authId }).sort({ createdAt: -1 });
     return NextResponse.json({ success: true, data: payouts });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 400 });
@@ -15,6 +21,11 @@ export async function GET() {
 
 export async function POST(request) {
   try {
+    const auth = await requireAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
+
     await connectToDatabase();
     const body = await request.json();
     
@@ -28,6 +39,7 @@ export async function POST(request) {
     body.amount = Math.max(0.01, normalizeMoney(body.amount, 0));
     body.destinationBank = normalizeString(body.destinationBank);
     body.accountMask = normalizeString(body.accountMask).slice(-4).padStart(4, "0");
+    body.ownerAuthId = auth.authId;
 
     const payout = await Payout.create(body);
     return NextResponse.json({ success: true, data: payout }, { status: 201 });

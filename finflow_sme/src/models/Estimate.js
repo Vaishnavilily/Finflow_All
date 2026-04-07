@@ -8,6 +8,7 @@ const EstimateItemSchema = new mongoose.Schema({
 });
 
 const EstimateSchema = new mongoose.Schema({
+  ownerAuthId: { type: String, required: true, index: true },
   estimateNumber: { type: String, required: true, unique: true, trim: true },
   customerName: { type: String, required: true, trim: true },
   issueDate: { type: Date, required: true, default: Date.now },
@@ -17,4 +18,4 @@ const EstimateSchema = new mongoose.Schema({
   status: { type: String, enum: ['Draft', 'Sent', 'Accepted', 'Rejected'], default: 'Draft' }
 }, { timestamps: true });
 
-export default mongoose.models.Estimate || mongoose.model("Estimate", EstimateSchema);
+export default mongoose.models.Estimate || mongoose.model("Estimate", EstimateSchema, "sme_estimates");

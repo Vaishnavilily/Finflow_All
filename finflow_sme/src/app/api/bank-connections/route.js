@@ -2,11 +2,17 @@ import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb";
 import BankConnection from "@/models/BankConnection";
 import { normalizeMoney, normalizeString } from "@/lib/db-normalizers";
+import { requireAuth } from "@/lib/jwt";
 
-export async function GET() {
+export async function GET(request) {
   try {
+    const auth = await requireAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
+
     await connectToDatabase();
-    const connections = await BankConnection.find({}).sort({ createdAt: -1 });
+    const connections = await BankConnection.find({ ownerAuthId: auth.authId }).sort({ createdAt: -1 });
     return NextResponse.json({ success: true, data: connections });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 400 });
@@ -15,6 +21,11 @@ export async function GET() {
 
 export async function POST(request) {
   try {
+    const auth = await requireAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
+
     await connectToDatabase();
     const body = await request.json();
     
@@ -34,6 +45,7 @@ export async function POST(request) {
     body.provider = normalizeString(body.provider, "Mock-Plaid");
     body.status = 'Connected';
     body.lastSync = new Date();
+    body.ownerAuthId = auth.authId;
 
     const connection = await BankConnection.create(body);
     return NextResponse.json({ success: true, data: connection }, { status: 201 });

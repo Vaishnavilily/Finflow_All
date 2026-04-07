@@ -11,4 +11,4 @@ const TransactionSchema = new mongoose.Schema({
 
 TransactionSchema.index({ ownerAuthId: 1, date: -1 });
 
-export default mongoose.models.Transaction || mongoose.model('Transaction', TransactionSchema);
+export default mongoose.models.Transaction || mongoose.model('Transaction', TransactionSchema, 'personal_transactions');

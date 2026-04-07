@@ -8,6 +8,7 @@ const BillItemSchema = new mongoose.Schema({
 });
 
 const BillSchema = new mongoose.Schema({
+  ownerAuthId: { type: String, required: true, index: true },
   billNumber: { type: String, required: true, unique: true, trim: true },
   vendorName: { type: String, required: true, trim: true },
   issueDate: { type: Date, required: true, default: Date.now },
@@ -20,4 +21,4 @@ const BillSchema = new mongoose.Schema({
   status: { type: String, enum: ['Unpaid', 'Paid', 'Overdue'], default: 'Unpaid' }
 }, { timestamps: true });
 
-export default mongoose.models.Bill || mongoose.model("Bill", BillSchema);
+export default mongoose.models.Bill || mongoose.model("Bill", BillSchema, "sme_bills");

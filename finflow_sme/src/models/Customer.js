@@ -10,4 +10,4 @@ const CustomerSchema = new mongoose.Schema({
   totalBilled: { type: Number, default: 0 }
 }, { timestamps: true });
 
-export default mongoose.models.Customer || mongoose.model("Customer", CustomerSchema);
+export default mongoose.models.Customer || mongoose.model("Customer", CustomerSchema, "sme_customers");

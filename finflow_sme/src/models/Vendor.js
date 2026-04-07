@@ -10,4 +10,4 @@ const VendorSchema = new mongoose.Schema({
   totalSpent: { type: Number, default: 0 }
 }, { timestamps: true });
 
-export default mongoose.models.Vendor || mongoose.model("Vendor", VendorSchema);
+export default mongoose.models.Vendor || mongoose.model("Vendor", VendorSchema, "sme_vendors");

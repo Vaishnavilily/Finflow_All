@@ -12,4 +12,4 @@ const TransactionSchema = new mongoose.Schema({
   isReconciled: { type: Boolean, default: false }
 }, { timestamps: true });
 
-export default mongoose.models.Transaction || mongoose.model("Transaction", TransactionSchema);
+export default mongoose.models.Transaction || mongoose.model("Transaction", TransactionSchema, "sme_transactions");

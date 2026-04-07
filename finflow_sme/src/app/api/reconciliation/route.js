@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb";
 import Transaction from "@/models/Transaction";
+import { requireAuth } from "@/lib/jwt";
 
-export async function GET() {
+export async function GET(request) {
   try {
+    const auth = await requireAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
+
     await connectToDatabase();
     
     // 1. Fetch internal transactions that are NOT reconciled yet
     const pendingInternalTransactions = await Transaction.find({ 
+      ownerAuthId: auth.authId,
       isReconciled: { $ne: true } 
     }).sort({ date: -1 }).lean();
 

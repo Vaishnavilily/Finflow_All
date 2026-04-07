@@ -3,9 +3,15 @@ import connectToDatabase from "@/lib/mongodb";
 import Transaction from "@/models/Transaction";
 import Invoice from "@/models/Invoice";
 import Bill from "@/models/Bill";
+import { requireAuth } from "@/lib/jwt";
 
 export async function GET(request) {
   try {
+    const auth = await requireAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
+
     await connectToDatabase();
     
     const { searchParams } = new URL(request.url);
@@ -23,7 +29,10 @@ export async function GET(request) {
     }
 
     // 1. Transactions - Income and Expenses
-    const transactionQuery = period === "all-time" ? {} : { date: dateFilter };
+    const transactionQuery =
+      period === "all-time"
+        ? { ownerAuthId: auth.authId }
+        : { ownerAuthId: auth.authId, date: dateFilter };
     const transactions = await Transaction.find(transactionQuery);
     
     let totalIncome = 0;
@@ -50,14 +59,14 @@ export async function GET(request) {
       .slice(0, 5); // Top 5 categories
 
     // 2. Receivables (Unpaid Sent Invoices)
-    const invoiceQuery = { status: "Sent" };
+    const invoiceQuery = { ownerAuthId: auth.authId, status: "Sent" };
     if (period !== "all-time") invoiceQuery.issueDate = dateFilter;
     
     const invoices = await Invoice.find(invoiceQuery);
     const receivables = invoices.reduce((sum, inv) => sum + inv.total, 0);
 
     // 3. Payables (Unpaid Bills)
-    const billQuery = { status: "Unpaid" };
+    const billQuery = { ownerAuthId: auth.authId, status: "Unpaid" };
     if (period !== "all-time") billQuery.issueDate = dateFilter;
     
     const bills = await Bill.find(billQuery);

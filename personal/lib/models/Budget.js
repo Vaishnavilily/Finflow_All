@@ -11,4 +11,4 @@ const BudgetSchema = new mongoose.Schema({
 
 BudgetSchema.index({ ownerAuthId: 1, month: 1, category: 1 }, { unique: true });
 
-export default mongoose.models.Budget || mongoose.model('Budget', BudgetSchema);
+export default mongoose.models.Budget || mongoose.model('Budget', BudgetSchema, 'personal_budgets');

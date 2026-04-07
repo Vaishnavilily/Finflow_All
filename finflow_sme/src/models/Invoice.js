@@ -8,6 +8,7 @@ const InvoiceItemSchema = new mongoose.Schema({
 });
 
 const InvoiceSchema = new mongoose.Schema({
+  ownerAuthId: { type: String, required: true, index: true },
   invoiceNumber: { type: String, required: true, unique: true, trim: true },
   customerName: { type: String, required: true, trim: true },
   customerEmail: { type: String, lowercase: true, trim: true },
@@ -22,4 +23,4 @@ const InvoiceSchema = new mongoose.Schema({
   accentColor: { type: String, default: '#004C91', trim: true }
 }, { timestamps: true });
 
-export default mongoose.models.Invoice || mongoose.model("Invoice", InvoiceSchema);
+export default mongoose.models.Invoice || mongoose.model("Invoice", InvoiceSchema, "sme_invoices");
