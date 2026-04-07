@@ -2,17 +2,18 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Transaction from '@/lib/models/Transaction';
 import User from '@/lib/models/user';
+import { requireAuth } from '@/lib/jwt';
 
 export async function GET(request, { params }) {
   try {
+    const auth = await requireAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+
     await connectDB();
     const { id } = params;
-    const { searchParams } = new URL(request.url);
-    const authId = searchParams.get('authId');
-
-    if (!authId) {
-      return NextResponse.json({ error: 'Missing authId' }, { status: 400 });
-    }
+    const authId = auth.authId;
 
     const txn = await Transaction.findOne({ _id: id, ownerAuthId: authId });
     if (!txn) {
@@ -26,14 +27,16 @@ export async function GET(request, { params }) {
 
 export async function PUT(request, { params }) {
   try {
+    const auth = await requireAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+
     await connectDB();
     const { id } = params;
     const body = await request.json();
-    const { authId, ...updates } = body;
-
-    if (!authId) {
-      return NextResponse.json({ error: 'Missing authId' }, { status: 400 });
-    }
+    const { authId: _ignoredAuthId, ...updates } = body || {};
+    const authId = auth.authId;
 
     const txn = await Transaction.findOneAndUpdate(
       { _id: id, ownerAuthId: authId },
@@ -52,14 +55,14 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
+    const auth = await requireAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+
     await connectDB();
     const { id } = params;
-    const { searchParams } = new URL(request.url);
-    const authId = searchParams.get('authId');
-
-    if (!authId) {
-      return NextResponse.json({ error: 'Missing authId' }, { status: 400 });
-    }
+    const authId = auth.authId;
 
     const txn = await Transaction.findOneAndDelete({ _id: id, ownerAuthId: authId });
     if (!txn) {

@@ -6,6 +6,15 @@
 
 import { getDb } from '../_lib/db.js';
 import bcrypt from 'bcryptjs';
+import { SignJWT } from 'jose';
+
+function getJwtSecretKey() {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('Missing JWT_SECRET');
+  }
+  return new TextEncoder().encode(secret);
+}
 
 function resolveUserCollectionName(userType) {
   if (userType === 'individual') return 'individual_users';
@@ -47,12 +56,27 @@ export default async function handler(req, res) {
       return res.status(401).json({ success: false, message: 'Invalid email or password.' });
     }
 
-    // ✅ Return user data — the frontend uses this to build authUser and pass authId to the personal app
+    const userId = user._id.toString();
+    const name = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+
+    const token = await new SignJWT({
+      email: user.email,
+      name,
+      userType,
+    })
+      .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
+      .setSubject(userId)
+      .setIssuedAt()
+      .setExpirationTime('7d')
+      .sign(getJwtSecretKey());
+
+    // Return user data + JWT. Apps must verify the JWT and derive authId from `sub`.
     return res.status(200).json({
       success: true,
       userType,
+      token,
       user: {
-        id: user._id.toString(),          // ← this becomes authId in the personal app
+        id: userId,          // authId (also equals JWT `sub`)
         email: user.email,
         firstName: user.firstName || '',
         lastName: user.lastName || '',

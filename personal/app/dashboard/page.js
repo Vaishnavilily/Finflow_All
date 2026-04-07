@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import TopBar from '@/components/TopBar';
 import { useAuthUser } from '@/lib/useAuthUser';
+import { authFetch } from '@/lib/auth-fetch';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement,
@@ -21,16 +22,12 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!authReady || !authUser?.authId) return;
 
-    const params = new URLSearchParams({
-      authId: authUser.authId,
-    });
-
     let cancelled = false;
 
     Promise.all([
-      fetch(`/api/profile?${params.toString()}`).then(r => r.json()),
-      fetch(`/api/transactions?authId=${encodeURIComponent(authUser.authId)}`).then(r => r.json()),
-      fetch(`/api/goals?authId=${encodeURIComponent(authUser.authId)}`).then(r => r.json()),
+      authFetch('/api/profile', authUser).then(r => r.json()),
+      authFetch('/api/transactions', authUser).then(r => r.json()),
+      authFetch('/api/goals', authUser).then(r => r.json()),
     ]).then(([profileRes, txns, gls]) => {
       if (cancelled) return;
       setIsNewUser(Boolean(profileRes?.isNewUser));

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import TopBar from '@/components/TopBar';
 import { useAuthUser } from '@/lib/useAuthUser';
+import { authFetch } from '@/lib/auth-fetch';
 
 const GOAL_CATS = ['Savings', 'Travel', 'Education', 'Emergency Fund', 'Retirement', 'Electronics', 'Vehicle', 'Home', 'Investment', 'Other'];
 const COLORS = ['#004c8c','#16a34a','#7c3aed','#d97706','#0891b2','#dc2626','#be185d','#ea580c'];
@@ -20,7 +21,7 @@ export default function GoalsPage() {
       setGoals([]);
       return;
     }
-    const res = await fetch(`/api/goals?authId=${encodeURIComponent(authUser.authId)}`);
+    const res = await authFetch('/api/goals', authUser);
     const data = await res.json();
     setGoals(Array.isArray(data) ? data : []);
   };
@@ -29,7 +30,7 @@ export default function GoalsPage() {
     if (!authReady || !authUser?.authId) return;
     let cancelled = false;
     (async () => {
-      const res = await fetch(`/api/goals?authId=${encodeURIComponent(authUser.authId)}`);
+      const res = await authFetch('/api/goals', authUser);
       const data = await res.json();
       if (!cancelled) setGoals(Array.isArray(data) ? data : []);
     })();
@@ -43,14 +44,13 @@ export default function GoalsPage() {
     if (!form.name || !form.targetAmount) return;
     if (!authUser?.authId) return;
     setSaving(true);
-    await fetch('/api/goals', {
+    await authFetch('/api/goals', authUser, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...form,
         targetAmount: Number(form.targetAmount),
         currentAmount: Number(form.currentAmount || 0),
-        authId: authUser.authId,
       }),
     });
     setForm({ name: '', targetAmount: '', currentAmount: '', category: GOAL_CATS[0], deadline: '' });
@@ -61,7 +61,7 @@ export default function GoalsPage() {
 
   const handleDelete = async (id) => {
     if (!authUser?.authId) return;
-    await fetch(`/api/goals/${id}?authId=${encodeURIComponent(authUser.authId)}`, { method: 'DELETE' });
+    await authFetch(`/api/goals/${id}`, authUser, { method: 'DELETE' });
     await fetchGoals();
   };
 
@@ -69,10 +69,10 @@ export default function GoalsPage() {
     if (!depositAmt) return;
     if (!authUser?.authId) return;
     const goal = goals.find(g => g._id === id);
-    await fetch(`/api/goals/${id}`, {
+    await authFetch(`/api/goals/${id}`, authUser, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ currentAmount: goal.currentAmount + Number(depositAmt), authId: authUser.authId }),
+      body: JSON.stringify({ currentAmount: goal.currentAmount + Number(depositAmt) }),
     });
     setDepositId(null);
     setDepositAmt('');

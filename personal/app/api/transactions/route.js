@@ -2,17 +2,19 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Transaction from '@/lib/models/Transaction';
 import User from '@/lib/models/user';
+import { requireAuth } from '@/lib/jwt';
 
 export async function GET(request) {
   try {
+    const auth = await requireAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+
     await connectDB();
     const { searchParams } = new URL(request.url);
-    const authId = searchParams.get('authId');
     const type = searchParams.get('type');
-
-    if (!authId) {
-      return NextResponse.json({ error: 'Missing authId' }, { status: 400 });
-    }
+    const authId = auth.authId;
 
     const transactions = await Transaction.find({
       ownerAuthId: authId,
@@ -46,13 +48,15 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
+    const auth = await requireAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+
     await connectDB();
     const body = await request.json();
-    const { authId, ...txnData } = body;
-
-    if (!authId) {
-      return NextResponse.json({ error: 'Missing authId' }, { status: 400 });
-    }
+    const { authId: _ignoredAuthId, ...txnData } = body || {};
+    const authId = auth.authId;
 
     const user = await User.findOne({ authId });
     if (!user) {

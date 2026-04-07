@@ -8,6 +8,15 @@
 
 import bcrypt from 'bcryptjs';
 import { getDb } from '../_lib/db.js';
+import { SignJWT } from 'jose';
+
+function getJwtSecretKey() {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+        throw new Error('Missing JWT_SECRET');
+    }
+    return new TextEncoder().encode(secret);
+}
 
 function validatePassword(p) {
     if (p.length < 8) return 'Password must be at least 8 characters.';
@@ -77,12 +86,26 @@ export default async function handler(req, res) {
         };
 
         const result = await usersCollection.insertOne(newUser);
+        const userId = result.insertedId.toString();
+        const name = [newUser.firstName, newUser.lastName].filter(Boolean).join(' ').trim();
+
+        const token = await new SignJWT({
+            email: newUser.email,
+            name,
+            userType,
+        })
+            .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
+            .setSubject(userId)
+            .setIssuedAt()
+            .setExpirationTime('7d')
+            .sign(getJwtSecretKey());
 
         return res.status(201).json({
             success: true,
             message: 'Account created successfully.',
+            token,
             user: {
-                id: result.insertedId,
+                id: userId,
                 firstName: newUser.firstName,
                 lastName: newUser.lastName,
                 email: newUser.email,

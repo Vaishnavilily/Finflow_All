@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/lib/models/user';
+import { requireAuth } from '@/lib/jwt';
 
 function toNumber(value) {
   const n = Number(value);
@@ -44,16 +45,15 @@ function serializeUser(userDoc) {
 
 export async function GET(request) {
   try {
-    await connectDB();
-
-    const { searchParams } = new URL(request.url);
-    const payload = normalizePayload({
-      authId: searchParams.get('authId'),
-    });
-
-    if (!payload.authId) {
-      return NextResponse.json({ error: 'Missing authId' }, { status: 400 });
+    const auth = await requireAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
+
+    await connectDB();
+    const payload = normalizePayload({
+      authId: auth.authId,
+    });
 
     let user = await User.findOne({ authId: payload.authId });
     let isNewUser = false;
@@ -77,12 +77,14 @@ export async function GET(request) {
 
 export async function PATCH(request) {
   try {
-    await connectDB();
-    const payload = normalizePayload(await request.json());
-
-    if (!payload.authId) {
-      return NextResponse.json({ error: 'Missing authId' }, { status: 400 });
+    const auth = await requireAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
+
+    await connectDB();
+    const body = await request.json();
+    const payload = normalizePayload({ ...(body || {}), authId: auth.authId });
 
     const updates = {
       name: payload.name,

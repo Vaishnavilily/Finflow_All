@@ -33,6 +33,7 @@ function sanitizeUser(input = {}) {
     authId: String(authId),
     email: input.email ? String(input.email).toLowerCase() : '',
     name: input.name ? String(input.name) : '',
+    token: input.token ? String(input.token) : (input.accessToken ? String(input.accessToken) : ''),
   };
 }
 
@@ -72,6 +73,8 @@ function readFromQuery() {
     sub: params.get('sub') || '',
     email: params.get('email') || '',
     name: params.get('name') || '',
+    token: params.get('token') || '',
+    accessToken: params.get('accessToken') || '',
   };
   return sanitizeUser(fromQuery);
 }

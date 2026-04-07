@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import TopBar from '@/components/TopBar';
 import Link from 'next/link';
 import { useAuthUser } from '@/lib/useAuthUser';
+import { authFetch } from '@/lib/auth-fetch';
 
 const PROFILE = {
   name: '',
@@ -45,11 +46,7 @@ export default function ProfilePage() {
         return;
       }
 
-      const params = new URLSearchParams({
-        authId: authUser.authId,
-      });
-
-      const res = await fetch(`/api/profile?${params.toString()}`);
+      const res = await authFetch('/api/profile', authUser);
       const data = await res.json();
       const nextProfile = data?.profile
         ? { ...PROFILE, ...data.profile, dob: data.profile.dob ? new Date(data.profile.dob).toISOString().split('T')[0] : '' }
@@ -68,10 +65,10 @@ export default function ProfilePage() {
   const handleSave = async () => {
     if (!authUser?.authId) return;
     setSaving(true);
-    const res = await fetch('/api/profile', {
+    const res = await authFetch('/api/profile', authUser, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, authId: authUser.authId }),
+      body: JSON.stringify({ ...form }),
     });
     const data = await res.json();
     const saved = data?.profile

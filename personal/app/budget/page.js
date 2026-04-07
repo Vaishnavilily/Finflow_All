@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import TopBar from '@/components/TopBar';
 import { useAuthUser } from '@/lib/useAuthUser';
+import { authFetch } from '@/lib/auth-fetch';
 
 const CATEGORIES = ['Housing & Rent', 'Food & Dining', 'Transport', 'Entertainment', 'Shopping', 'Healthcare', 'Investments', 'Utilities', 'Education', 'Other'];
 const COLORS = ['#004c8c','#16a34a','#dc2626','#7c3aed','#d97706','#0891b2','#be185d','#0f172a','#ea580c','#64748b'];
@@ -20,7 +21,7 @@ export default function BudgetPage() {
     }
 
     try {
-      const res = await fetch(`/api/budgets?authId=${encodeURIComponent(authUser.authId)}`);
+      const res = await authFetch('/api/budgets', authUser);
       const data = await res.json();
       setBudgets(Array.isArray(data) ? data : []);
     } catch { /* ignore */ }
@@ -31,7 +32,7 @@ export default function BudgetPage() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`/api/budgets?authId=${encodeURIComponent(authUser.authId)}`);
+        const res = await authFetch('/api/budgets', authUser);
         const data = await res.json();
         if (!cancelled) setBudgets(Array.isArray(data) ? data : []);
       } catch {
@@ -54,14 +55,13 @@ export default function BudgetPage() {
     if (!form.limit) return;
     if (!authUser?.authId) return;
     setSaving(true);
-    await fetch('/api/budgets', {
+    await authFetch('/api/budgets', authUser, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...form,
         limit: Number(form.limit),
         alertThreshold: Number(form.alertThreshold),
-        authId: authUser.authId,
       }),
     });
     setForm({ category: CATEGORIES[0], limit: '', alertThreshold: 80 });
@@ -71,7 +71,7 @@ export default function BudgetPage() {
 
   const handleDelete = async (id) => {
     if (!authUser?.authId) return;
-    await fetch(`/api/budgets/${id}?authId=${encodeURIComponent(authUser.authId)}`, { method: 'DELETE' });
+    await authFetch(`/api/budgets/${id}`, authUser, { method: 'DELETE' });
     await fetchBudgets();
   };
 

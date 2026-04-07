@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import TopBar from '@/components/TopBar';
 import { useAuthUser } from '@/lib/useAuthUser';
+import { authFetch } from '@/lib/auth-fetch';
 
 const CATEGORIES = ['Income', 'Food', 'Housing', 'Transport', 'Shopping', 'Investment', 'Utilities', 'Healthcare', 'Entertainment', 'Loan', 'Education', 'Other'];
 
@@ -23,7 +24,7 @@ export default function TransactionsPage() {
       setTransactions([]);
       return;
     }
-    const res = await fetch(`/api/transactions?authId=${encodeURIComponent(authUser.authId)}`);
+    const res = await authFetch('/api/transactions', authUser);
     const data = await res.json();
     setTransactions(Array.isArray(data) ? data : []);
   };
@@ -32,7 +33,7 @@ export default function TransactionsPage() {
     if (!authReady || !authUser?.authId) return;
     let cancelled = false;
     (async () => {
-      const res = await fetch(`/api/transactions?authId=${encodeURIComponent(authUser.authId)}`);
+      const res = await authFetch('/api/transactions', authUser);
       const data = await res.json();
       if (!cancelled) setTransactions(Array.isArray(data) ? data : []);
     })();
@@ -54,10 +55,10 @@ export default function TransactionsPage() {
     if (!form.description || !form.amount) return;
     if (!authUser?.authId) return;
     setSaving(true);
-    await fetch('/api/transactions', {
+    await authFetch('/api/transactions', authUser, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, amount: Number(form.amount), authId: authUser.authId }),
+      body: JSON.stringify({ ...form, amount: Number(form.amount) }),
     });
     setForm({ description: '', category: 'Food', amount: '', type: 'expense', date: new Date().toISOString().split('T')[0] });
     setShowModal(false);
@@ -67,7 +68,7 @@ export default function TransactionsPage() {
 
   const handleDelete = async (id) => {
     if (!authUser?.authId) return;
-    await fetch(`/api/transactions/${id}?authId=${encodeURIComponent(authUser.authId)}`, { method: 'DELETE' });
+    await authFetch(`/api/transactions/${id}`, authUser, { method: 'DELETE' });
     await fetchTxns();
   };
 

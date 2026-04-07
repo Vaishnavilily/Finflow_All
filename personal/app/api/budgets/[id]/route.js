@@ -2,17 +2,18 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Budget from '@/lib/models/Budget';
 import User from '@/lib/models/user';
+import { requireAuth } from '@/lib/jwt';
 
 export async function DELETE(request, { params }) {
   try {
+    const auth = await requireAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+
     await connectDB();
     const { id } = params;
-    const { searchParams } = new URL(request.url);
-    const authId = searchParams.get('authId');
-
-    if (!authId) {
-      return NextResponse.json({ error: 'Missing authId' }, { status: 400 });
-    }
+    const authId = auth.authId;
 
     const deleted = await Budget.findOneAndDelete({ _id: id, ownerAuthId: authId });
     if (!deleted) {
@@ -27,14 +28,16 @@ export async function DELETE(request, { params }) {
 
 export async function PATCH(request, { params }) {
   try {
+    const auth = await requireAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+
     await connectDB();
     const { id } = params;
     const body = await request.json();
-    const { authId, ...updates } = body;
-
-    if (!authId) {
-      return NextResponse.json({ error: 'Missing authId' }, { status: 400 });
-    }
+    const { authId: _ignoredAuthId, ...updates } = body || {};
+    const authId = auth.authId;
 
     const budget = await Budget.findOneAndUpdate(
       { _id: id, ownerAuthId: authId },

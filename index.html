@@ -784,13 +784,15 @@
         /* ---- State ---- */
         let currentType = null; // 'individual' | 'sme'
 
-        // ✅ FIX 1: Updated to point to the correct combined-app paths
-        // Since gateway, personal, and SME are all in the same Vercel deployment (finflow-all.vercel.app),
-        // the personal dashboard is at /personal/dashboard and SME is at /sme (adjust if your
-        // vercel.json routes them differently — check your vercel.json rewrites).
+        // Redirect targets.
+        // In most deployments these are separate apps (different origins), so localStorage does NOT transfer.
+        // We therefore always include the auth data as URL params on redirect.
+        //
+        // If you later deploy everything under one domain with proper rewrites, you can switch these
+        // back to same-origin paths.
         const APPS = {
-            individual: '/personal/dashboard',
-            sme: '/sme'
+            individual: 'https://finflow-individual.vercel.app/dashboard',
+            sme: 'https://finflowsme.vercel.app/'
         };
 
         const TYPE_LABELS = {
@@ -896,7 +898,7 @@
                 const data = await res.json();
 
                 if (res.ok && data.success) {
-                    redirectSuccess(currentType, false, data.user);
+                    redirectSuccess(currentType, false, data.user, data.token);
                 } else {
                     showAlert('login-alert', 'error', data.message || 'Invalid email or password. Please try again.');
                 }
@@ -939,7 +941,7 @@
                 const data = await res.json();
 
                 if (res.ok && data.success) {
-                    redirectSuccess(currentType, true, data.user);
+                    redirectSuccess(currentType, true, data.user, data.token);
                 } else {
                     showAlert('reg-alert', 'error', data.message || 'Registration failed. Please try again.');
                 }
@@ -953,11 +955,10 @@
         }
 
         /* ---- Redirect ---- */
-        // ✅ FIX 2: Proper session handoff
-        // Since all apps now share the same domain (finflow-all.vercel.app),
-        // we store the auth in localStorage (same domain = accessible everywhere)
-        // AND pass authId as a URL param as a fallback.
-        function redirectSuccess(type, isNew, user) {
+        // Session handoff:
+        // - localStorage only works when the gateway + apps share the same origin
+        // - URL params work across different origins, so we always include them
+        function redirectSuccess(type, isNew, user, token) {
             document.getElementById('success-title').textContent = isNew ? 'Account created!' : 'Login successful!';
             document.getElementById('success-msg').textContent =
                 'Redirecting you to ' + (type === 'sme' ? 'FinFlow SME' : 'FinFlow Individual') + '…';
@@ -969,7 +970,8 @@
                 authId: user?.id ? String(user.id) : (user?._id ? String(user._id) : ''),
                 email: user?.email ? String(user.email).toLowerCase() : '',
                 name: [user?.firstName, user?.lastName].filter(Boolean).join(' ').trim(),
-                userType: type
+                userType: type,
+                token: token ? String(token) : ''
             };
 
             if (!authUser.authId) {
@@ -981,9 +983,11 @@
 
             // ✅ Also pass as URL param — belt-and-suspenders for the Next.js app to read on first load
             const targetPath = APPS[type];
-            const targetUrl = new URL(targetPath, window.location.origin);
+            const targetUrl = new URL(targetPath);
             if (authUser.authId) targetUrl.searchParams.set('authId', authUser.authId);
-            if (authUser.email) targetUrl.searchParams.set('email', encodeURIComponent(authUser.email));
+            if (authUser.email) targetUrl.searchParams.set('email', authUser.email);
+            if (authUser.name) targetUrl.searchParams.set('name', authUser.name);
+            if (authUser.token) targetUrl.searchParams.set('token', authUser.token);
 
             setTimeout(() => { window.location.href = targetUrl.toString(); }, 2200);
         }

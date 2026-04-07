@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import TopBar from '@/components/TopBar';
 import { useAuthUser } from '@/lib/useAuthUser';
+import { authFetch } from '@/lib/auth-fetch';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler } from 'chart.js';
 
@@ -22,7 +23,7 @@ export default function CashForecastPage() {
   const [transactions, setTransactions] = useState([]);
   useEffect(() => {
     if (!authReady || !authUser?.authId) return;
-    fetch(`/api/transactions?authId=${encodeURIComponent(authUser.authId)}`)
+    authFetch('/api/transactions', authUser)
       .then(r => r.json())
       .then(d => setTransactions(Array.isArray(d) ? d : []));
   }, [authReady, authUser]);
