@@ -84,6 +84,10 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error('Login error:', err);
-    return res.status(500).json({ success: false, message: 'Server error. Please try again.' });
+    const message =
+      process.env.NODE_ENV === 'production'
+        ? 'Server error. Please try again.'
+        : (err?.message || 'Server error. Please try again.');
+    return res.status(500).json({ success: false, message });
   }
 }
